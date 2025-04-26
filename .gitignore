@@ -1,0 +1,43 @@
+# Ignore node_modules from frontend and backend
+frontend/node_modules/
+backend/node_modules/
+node_modules/
+
+# Ignore environment variables (very sensitive)
+*.env
+
+# Ignore frontend build files
+frontend/dist/
+dist/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore logs
+logs/
+*.log
+npm-debug.log*
+
+# Ignore editor settings (optional)
+.vscode/
+.idea/
+
+# Ignore database dumps (if any in future)
+*.sql
+
+# Ignore backup files
+*.bak
+*.tmp
+*.swp
+
+# Ignore coverage reports
+coverage/
+
+# Ignore uploads (if you add image upload later)
+uploads/
+
+# Optional: Ignore all hidden files except .gitignore and .env.example
+.*
+!.gitignore
+!.env.example
