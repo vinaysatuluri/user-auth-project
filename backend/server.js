@@ -1,39 +1,27 @@
 import express from 'express';
-import mysql from 'mysql2';
+import cors from 'cors';
 import dotenv from 'dotenv';
+import authRoutes from './routes/auth.js';
 
+// Load environment variables from .env file
 dotenv.config();
 
 const app = express();
-app.use(express.json());
 
-// Connect to MySQL database
-const db = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-});
+// Middleware
+app.use(cors());
+app.use(express.json()); // To parse JSON request bodies
 
-db.connect((err) => {
-  if (err) throw err;
-  console.log('Connected to the database!');
-});
+// Mount routes
+app.use('/auth', authRoutes); // All auth endpoints will be prefixed with /auth
 
-// Basic route to test server
+// Root route (optional)
 app.get('/', (req, res) => {
-  res.send('Hello, World!');
-});
-
-// Route to fetch all users from the database
-app.get('/users', (req, res) => {
-  db.query('SELECT * FROM users', (err, result) => {
-    if (err) throw err;
-    res.json(result);  // Send back the result as a JSON response
-  });
+  res.send('API is running...');
 });
 
 // Start the server
-app.listen(5000, () => {
-  console.log('Server is running on port 5000');
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`✅ Server running on http://localhost:${PORT}`);
 });
