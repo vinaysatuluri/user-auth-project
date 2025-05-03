@@ -67,10 +67,23 @@ export const loginHandler = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
 
-    if (!user.isVerified) return res.status(401).json({ error: 'Email not verified' });
+    if (!user.isVerified) return res.status(401).json({ error: 'Email not verified. Please verify your email first.' });
 
-    const token = jwt.sign({ userId: user.user_id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ message: 'Login successful', token });
+    const token = jwt.sign(
+      { userId: user.user_id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    res.json({
+      message: 'Login successful',
+      token,
+      user: {
+        id: user.user_id,
+        email: user.email,
+        name: `${user.first_name} ${user.last_name}`,
+      },
+    });
   } catch (err) {
     console.error('❌ Login error:', err);
     res.status(500).json({ error: 'Error logging in' });
@@ -121,6 +134,14 @@ export const forgotPasswordHandler = async (req, res) => {
 export const resetPasswordHandler = async (req, res) => {
   const { email, otp, newPassword } = req.body;
 
+  // Basic validation for password strength
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;  // At least 8 characters, 1 letter, 1 number
+  if (!passwordRegex.test(newPassword)) {
+    return res.status(400).json({
+      error: 'Password must be at least 8 characters long and contain both letters and numbers.'
+    });
+  }
+
   try {
     const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
     if (rows.length === 0) return res.status(400).json({ error: 'Email not found' });
@@ -139,3 +160,4 @@ export const resetPasswordHandler = async (req, res) => {
     res.status(500).json({ error: 'Error resetting password' });
   }
 };
+

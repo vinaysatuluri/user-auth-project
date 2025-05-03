@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { signUp } from '../api';  // Import the correct API function
 
 function SignUp() {
   const [formData, setFormData] = useState({
@@ -15,6 +16,7 @@ function SignUp() {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -43,36 +45,30 @@ function SignUp() {
     return Object.keys(tempErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validate()) {
-      console.log('Form submitted successfully', formData);
-      setIsSubmitted(true);
+      setLoading(true);
+      try {
+        console.log('Submitting form with data:', formData);  // Log the form data before submission
+        const response = await signUp(formData);  // Call the signup function from api.js
+        console.log('Form submission successful', response);  // Log the response from the API
+        setIsSubmitted(true);  // Set to true if the signup is successful
+      } catch (error) {
+        console.error('Error during form submission:', error.response ? error.response.data : error.message);  // Log detailed error
+        alert('Error: Unable to create account');  // Show a generic error message
+      } finally {
+        setLoading(false);  // Reset the loading state
+      }
     }
   };
 
   if (isSubmitted) {
     return (
-      <div
-        className="d-flex justify-content-center align-items-center"
-        style={{
-          minHeight: '100vh',
-          background: '#0d0d0d',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh', background: '#0d0d0d' }}>
         <div
           className="card p-4 shadow-lg animate__animated animate__fadeIn"
-          style={{
-            width: '22rem',
-            borderRadius: '1.25rem',
-            background: '#1a1a1a',
-            border: '1px solid #333',
-            color: '#ffffff',
-            textAlign: 'center',
-          }}
+          style={{ width: '22rem', borderRadius: '1.25rem', background: '#1a1a1a', border: '1px solid #333', color: '#ffffff', textAlign: 'center' }}
         >
           <h3 style={{ fontWeight: 'bold', fontSize: '1.5rem', color: '#28a745' }}>Account Created Successfully!</h3>
           <p style={{ marginTop: '1rem', fontSize: '1rem' }}>
@@ -84,27 +80,8 @@ function SignUp() {
   }
 
   return (
-    <div
-      className="d-flex justify-content-center align-items-center"
-      style={{
-        minHeight: '100vh',
-        background: '#0d0d0d',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <div
-        className="card p-3 shadow-lg animate__animated animate__fadeIn"
-        style={{
-          width: '22rem',
-          borderRadius: '1.25rem',
-          background: '#1a1a1a',
-          border: '1px solid #333',
-          color: '#ffffff',
-        }}
-      >
-        {/* Logo */}
+    <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh', background: '#0d0d0d' }}>
+      <div className="card p-3 shadow-lg animate__animated animate__fadeIn" style={{ width: '22rem', borderRadius: '1.25rem', background: '#1a1a1a', border: '1px solid #333', color: '#ffffff' }}>
         <div className="text-center mb-2">
           <img src="/logo.png" alt="Logo" style={{ width: '45px', height: '45px', objectFit: 'contain' }} />
         </div>
@@ -114,18 +91,15 @@ function SignUp() {
             Create Account
           </h3>
 
-          {/* Input Fields */}
           <InputField id="firstName" label="First Name" value={formData.firstName} onChange={handleChange} error={errors.firstName} />
           <InputField id="middleName" label="Middle Name (optional)" value={formData.middleName} onChange={handleChange} />
           <InputField id="lastName" label="Last Name" value={formData.lastName} onChange={handleChange} error={errors.lastName} />
           <InputField id="username" label="Username" value={formData.username} onChange={handleChange} error={errors.username} />
           <InputField id="email" label="Email Address" type="email" value={formData.email} onChange={handleChange} error={errors.email} />
 
-          {/* Password Field with Toggle */}
+          {/* Password Field */}
           <div className="mb-2 position-relative">
-            <label htmlFor="password" className="form-label" style={{ color: '#bbbbbb', fontSize: '0.9rem' }}>
-              Password
-            </label>
+            <label htmlFor="password" className="form-label" style={{ color: '#bbbbbb', fontSize: '0.9rem' }}>Password</label>
             <div className="position-relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -162,25 +136,16 @@ function SignUp() {
 
           <InputField id="phone" label="Phone" value={formData.phone} onChange={handleChange} error={errors.phone} />
 
-          {/* Submit Button */}
           <button
             type="submit"
             className="btn w-100"
-            style={{
-              borderRadius: '0.7rem',
-              padding: '0.6rem',
-              backgroundColor: '#4e54c8',
-              border: 'none',
-              fontWeight: 'bold',
-              color: '#ffffff',
-              fontSize: '1rem',
-            }}
+            style={{ borderRadius: '0.7rem', padding: '0.6rem', backgroundColor: '#4e54c8', border: 'none', fontWeight: 'bold', color: '#ffffff', fontSize: '1rem' }}
+            disabled={loading}
           >
-            Sign Up
+            {loading ? 'Submitting...' : 'Sign Up'}
           </button>
         </form>
 
-        {/* Login Redirect */}
         <div className="text-center mt-2">
           <p className="mb-0" style={{ color: '#bbbbbb', fontSize: '0.85rem' }}>
             Already have an account?{' '}

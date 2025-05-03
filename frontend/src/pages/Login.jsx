@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import api from '../api'; // ✅ using centralized axios instance
 
 function Login() {
   const [formData, setFormData] = useState({
@@ -9,6 +11,9 @@ function Login() {
 
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+  const [message, setMessage] = useState(null);
+  const [loading, setLoading] = useState(false); // Loading state for the button
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -27,43 +32,65 @@ function Login() {
     return Object.keys(tempErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validate()) {
-      console.log('Login form submitted', formData);
-      // Add API call or redirect logic
+    if (!validate()) return;
+
+    setLoading(true); // Show loading state
+
+    try {
+      // Make API request
+      const res = await api.post('/auth/login', {
+        username: formData.usernameOrEmail,
+        password: formData.password,
+      });
+
+      // Add this line to verify the response and log the entire response
+      console.log(res.data); // Debugging line to check the full response
+
+      if (res.data.token) {
+        localStorage.setItem('token', res.data.token); // Store token in localStorage
+        setMessage({ type: 'success', text: 'Login successful!' });
+        setTimeout(() => setMessage(null), 5000); // Clear success message after 5 seconds
+        navigate('/dashboard');
+      } else {
+        setMessage({ type: 'error', text: 'Login failed. Please check your credentials.' });
+        setTimeout(() => setMessage(null), 5000); // Clear error message after 5 seconds
+      }
+
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Login failed. Please check your credentials.';
+      setMessage({ type: 'error', text: msg });
+      setTimeout(() => setMessage(null), 5000); // Clear error message after 5 seconds
+    } finally {
+      setLoading(false); // Hide loading state once the request is completed
     }
   };
 
   return (
-    <div
-      className="d-flex justify-content-center align-items-center"
-      style={{
-        minHeight: '100vh',
-        backgroundColor: '#0d0d0d',
-      }}
-    >
-      <div
-        className="p-3 shadow-lg animate__animated animate__fadeIn"
-        style={{
-          width: '22rem',
-          borderRadius: '1.25rem',
-          background: 'linear-gradient(145deg, #1a1a1a, #111)',
-          boxShadow: '0 0 30px rgba(0, 0, 0, 0.6)',
-          color: '#ffffff',
-        }}
-      >
-        {/* Logo */}
+    <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh', backgroundColor: '#0d0d0d' }}>
+      <div className="p-3 shadow-lg animate__animated animate__fadeIn" style={{
+        width: '22rem',
+        borderRadius: '1.25rem',
+        background: 'linear-gradient(145deg, #1a1a1a, #111)',
+        boxShadow: '0 0 30px rgba(0, 0, 0, 0.6)',
+        color: '#ffffff',
+      }}>
         <div className="text-center mb-2">
           <img src="/logo.png" alt="Logo" style={{ width: '45px', height: '45px', objectFit: 'contain' }} />
         </div>
 
         <form onSubmit={handleSubmit}>
-          <h3 className="text-center mb-3" style={{ fontWeight: 'bold', fontSize: '1.4rem', color: '#ffffff' }}>
+          <h3 className="text-center mb-3" style={{ fontWeight: 'bold', fontSize: '1.4rem' }}>
             Welcome Back
           </h3>
 
-          {/* Username or Email */}
+          {message && (
+            <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-danger'}`} style={{ fontSize: '0.9rem' }}>
+              {message.text}
+            </div>
+          )}
+
           <div className="mb-2">
             <label htmlFor="usernameOrEmail" className="form-label" style={{ color: '#bbbbbb', fontSize: '0.9rem' }}>
               Username or Email
@@ -89,7 +116,6 @@ function Login() {
             )}
           </div>
 
-          {/* Password */}
           <div className="mb-1 position-relative">
             <label htmlFor="password" className="form-label" style={{ color: '#bbbbbb', fontSize: '0.9rem' }}>
               Password
@@ -121,6 +147,7 @@ function Login() {
                   cursor: 'pointer',
                   color: '#bbbbbb',
                 }}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </span>
@@ -130,14 +157,12 @@ function Login() {
             )}
           </div>
 
-          {/* Forgot Password */}
           <div className="text-end mb-2">
             <a href="/forgot-password" style={{ color: '#4e54c8', fontSize: '0.85rem', textDecoration: 'none' }}>
               Forgot password?
             </a>
           </div>
 
-          {/* Login Button */}
           <button
             type="submit"
             className="btn w-100"
@@ -150,12 +175,12 @@ function Login() {
               color: '#ffffff',
               fontSize: '1rem',
             }}
+            disabled={loading} // Disable the button while loading
           >
-            Login
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
-        {/* Sign Up Link */}
         <div className="text-center mt-3">
           <p className="mb-0" style={{ color: '#bbbbbb', fontSize: '0.85rem' }}>
             Don't have an account?{' '}

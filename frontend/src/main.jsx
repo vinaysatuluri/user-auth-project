@@ -1,19 +1,16 @@
-// main.jsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import App from './App.jsx';
+import App from './App';
 
 // Bootstrap CSS
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-// Custom CSS
-import './App.css';
+// Global styles (optional)
+import './index.css';
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <App />
   </React.StrictMode>
 );

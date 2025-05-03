@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
+import api from '../api'; // ✅ using centralized axios instance
 
 function ResetPassword() {
   const [password, setPassword] = useState('');
@@ -23,7 +24,7 @@ function ResetPassword() {
     return 'Weak';
   };
 
-  const handleResetPassword = (e) => {
+  const handleResetPassword = async (e) => {
     e.preventDefault();
     setError('');
     setSuccessMsg('');
@@ -43,13 +44,18 @@ function ResetPassword() {
       setError('Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, and one number.');
       return;
     }
-  
+
     setLoading(true);
-    setTimeout(() => {
+    try {
+      // Assuming we have an endpoint for resetting the password
+      const response = await api.post('/reset-password', { password });
       setLoading(false);
       setSuccessMsg('Password has been reset successfully!');
-      setTimeout(() => navigate('/login'), 2000);
-    }, 2000);
+      setTimeout(() => navigate('/login'), 2000); // Redirect to login page after successful reset
+    } catch (err) {
+      setLoading(false);
+      setError(err.response?.data?.message || 'An error occurred while resetting your password.');
+    }
   };
 
   return (

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../api'; // ✅ using centralized axios instance
 
 function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -10,7 +11,7 @@ function ForgotPassword() {
   const [successMsg, setSuccessMsg] = useState('');
   const navigate = useNavigate();
 
-  const handleSendOtp = (e) => {
+  const handleSendOtp = async (e) => {
     e.preventDefault();
     setError('');
     if (!email) {
@@ -20,14 +21,19 @@ function ForgotPassword() {
 
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const response = await api.post('/forgot-password', { email });
+      // Assuming the backend sends a success message
       setLoading(false);
       setStep('verifyOtp');
       setSuccessMsg(`OTP sent to ${email}`);
-    }, 2000);
+    } catch (err) {
+      setLoading(false);
+      setError(err.response?.data?.message || 'An error occurred');
+    }
   };
 
-  const handleVerifyOtp = (e) => {
+  const handleVerifyOtp = async (e) => {
     e.preventDefault();
     setError('');
     if (!otp) {
@@ -37,11 +43,16 @@ function ForgotPassword() {
 
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const response = await api.post('/verify-otp', { email, otp });
+      // Assuming the backend sends a success message
       setLoading(false);
       setSuccessMsg('OTP Verified! You can now reset your password.');
       setStep('resetPassword'); // Step after OTP verification
-    }, 2000);
+    } catch (err) {
+      setLoading(false);
+      setError(err.response?.data?.message || 'Invalid or expired OTP');
+    }
   };
 
   const handleResetPassword = () => {
