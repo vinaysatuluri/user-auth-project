@@ -39,14 +39,10 @@ function Login() {
     setLoading(true); // Show loading state
 
     try {
-      // Make API request
       const res = await api.post('/auth/login', {
-        username: formData.usernameOrEmail,
+        usernameOrEmail: formData.usernameOrEmail, // ✅ UPDATED TO usernameOrEmail
         password: formData.password,
       });
-
-      // Add this line to verify the response and log the entire response
-      console.log(res.data); // Debugging line to check the full response
 
       if (res.data.token) {
         localStorage.setItem('token', res.data.token); // Store token in localStorage
@@ -54,18 +50,17 @@ function Login() {
         setTimeout(() => setMessage(null), 5000); // Clear success message after 5 seconds
         navigate('/dashboard');
       } else {
-        setMessage({ type: 'error', text: 'Login failed. Please check your credentials.' });
-        setTimeout(() => setMessage(null), 5000); // Clear error message after 5 seconds
+        throw new Error('Login failed. Please check your credentials.');
       }
-
     } catch (err) {
-      const msg = err.response?.data?.message || 'Login failed. Please check your credentials.';
+      const msg = err.response?.data?.message || err.message || 'Login failed. Please check your credentials.';
       setMessage({ type: 'error', text: msg });
       setTimeout(() => setMessage(null), 5000); // Clear error message after 5 seconds
     } finally {
       setLoading(false); // Hide loading state once the request is completed
     }
   };
+
 
   return (
     <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh', backgroundColor: '#0d0d0d' }}>

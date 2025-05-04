@@ -1,22 +1,30 @@
-// middleware/authMiddleware.js
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv'; // Import dotenv to use process.env
+
+dotenv.config(); // Load environment variables from .env file
 
 const authenticateToken = (req, res, next) => {
-  const token = req.headers['authorization']?.split(' ')[1]; // Extract token from Authorization header
-  
-  // Check if token is missing
-  if (!token) {
-    return res.status(401).json({ error: 'Token is required' }); // Return 401 if no token
-  }
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1]; // Extract token, handle missing header
 
-  try {
-    // Verify the token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Attach decoded user info to the request object
-    next(); // Proceed to the next middleware or route handler
-  } catch (err) {
-    return res.status(401).json({ error: 'Invalid or expired token' }); // Return 401 if the token is invalid or expired
-  }
+    // Check if token exists
+    if (!token) {
+        return res.status(401).json({ error: 'Token is required' });
+    }
+
+    try {
+        // Verify token using the JWT secret from environment variables
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded; // Attach the decoded user information to the request
+        next(); // Call the next middleware or route handler
+    } catch (error) {
+        // Handle different verification errors (optional, but good practice)
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ error: 'Token has expired' });
+        } else {
+            return res.status(401).json({ error: 'Invalid token' });
+        }
+    }
 };
 
 export default authenticateToken;
