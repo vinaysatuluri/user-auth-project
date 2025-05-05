@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import authRoutes from './routes/auth.js'; // Correct path
+import authRoutes from './routes/auth.js';
 import protectedRoutes from './routes/protected.js';
 import authenticateToken from './middleware/authMiddleware.js';
 
@@ -18,7 +18,7 @@ app.use(cors({
 app.use(express.json());
 
 // Routes
-app.use('/api/auth', authRoutes); // Mount authRoutes at /api/auth
+app.use('/api/auth', authRoutes);
 app.use('/api', protectedRoutes);
 
 // Protected route example

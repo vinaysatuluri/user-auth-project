@@ -1,192 +1,229 @@
 import React, { useState } from 'react';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaSpinner } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import api from '../api'; // ✅ using centralized axios instance
+import api from '../api';
 
 function Login() {
-  const [formData, setFormData] = useState({
-    usernameOrEmail: '',
-    password: '',
-  });
+    const [formData, setFormData] = useState({
+        usernameOrEmail: '',
+        password: '',
+    });
 
-  const [errors, setErrors] = useState({});
-  const [showPassword, setShowPassword] = useState(false);
-  const [message, setMessage] = useState(null);
-  const [loading, setLoading] = useState(false); // Loading state for the button
-  const navigate = useNavigate();
+    const [errors, setErrors] = useState({});
+    const [showPassword, setShowPassword] = useState(false);
+    const [message, setMessage] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value });
-  };
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.id]: e.target.value });
+    };
 
-  const validate = () => {
-    const tempErrors = {};
-    if (!formData.usernameOrEmail.trim()) tempErrors.usernameOrEmail = 'Username or Email is required';
-    if (!formData.password) {
-      tempErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      tempErrors.password = 'Password must be at least 8 characters';
-    }
+    const validate = () => {
+        const tempErrors = {};
+        if (!formData.usernameOrEmail.trim()) tempErrors.usernameOrEmail = 'Username or Email is required';
+        if (!formData.password) {
+            tempErrors.password = 'Password is required';
+        } else if (formData.password.length < 8) {
+            tempErrors.password = 'Password must be at least 8 characters';
+        }
 
-    setErrors(tempErrors);
-    return Object.keys(tempErrors).length === 0;
-  };
+        setErrors(tempErrors);
+        return Object.keys(tempErrors).length === 0;
+    };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!validate()) return;
 
-    setLoading(true); // Show loading state
+        setLoading(true);
+        setMessage(null);
+        try {
+            const res = await api.post('/auth/login', {
+                usernameOrEmail: formData.usernameOrEmail,
+                password: formData.password,
+            });
 
-    try {
-      const res = await api.post('/auth/login', {
-        usernameOrEmail: formData.usernameOrEmail, // ✅ UPDATED TO usernameOrEmail
-        password: formData.password,
-      });
+            if (res.data.token) {
+                localStorage.setItem('token', res.data.token);
+                localStorage.setItem('user', JSON.stringify(res.data.user));
+                setMessage({ type: 'success', text: 'Login successful!' });
+                setTimeout(() => {
+                    setMessage(null);
+                    navigate('/dashboard');
+                }, 1000);
+            } else {
+                throw new Error('Login failed. Please check your credentials.');
+            }
+        } catch (err) {
+            let msg = err.response?.data?.message || err.message || 'Login failed. Please check your credentials.';
+            if (err.response?.status === 400) {
+                msg = 'Invalid credentials. Please check your username/email and password.';
+            }
+            setMessage({ type: 'error', text: msg });
+            setTimeout(() => setMessage(null), 5000);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-      if (res.data.token) {
-        localStorage.setItem('token', res.data.token); // Store token in localStorage
-        setMessage({ type: 'success', text: 'Login successful!' });
-        setTimeout(() => setMessage(null), 5000); // Clear success message after 5 seconds
-        navigate('/dashboard');
-      } else {
-        throw new Error('Login failed. Please check your credentials.');
-      }
-    } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Login failed. Please check your credentials.';
-      setMessage({ type: 'error', text: msg });
-      setTimeout(() => setMessage(null), 5000); // Clear error message after 5 seconds
-    } finally {
-      setLoading(false); // Hide loading state once the request is completed
-    }
-  };
 
+    return (
+        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh', backgroundColor: '#0d0d0d' }}>
+            <div className="card shadow-lg animate__animated animate__fadeIn" style={{ width: '24rem', borderRadius: '1.5rem', background: 'rgba(255, 255, 255, 0.06)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.1)', boxShadow: '0 12px 24px rgba(0, 0, 0, 0.3)', color: '#ffffff' }}>
+                <div className="card-body p-4">
+                    <div className="text-center mb-4">
+                        <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                            borderRadius: '50%',
+                            padding: '8px',
+                            border: '2px solid rgba(255, 255, 255, 0.2)',
+                            width: '50px',
+                            height: '50px',
+                            marginBottom: '1rem'
+                        }}>
+                            <span style={{
+                                color: '#ffffff',
+                                fontWeight: 'bold',
+                                fontSize: '1.2rem',
+                                letterSpacing: '0.1em',
+                                textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)',
+                            }}>
+                                TEST
+                            </span>
+                        </div>
+                        <h3 className="card-title mt-3" style={{ fontWeight: 'bold', fontSize: '1.6rem', color: '#ffffff' }}>
+                            Welcome Back
+                        </h3>
+                        <p className="text-muted" style={{ fontSize: '0.9rem', color: '#cccccc' }}>Login to your account</p>
+                    </div>
 
-  return (
-    <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh', backgroundColor: '#0d0d0d' }}>
-      <div className="p-3 shadow-lg animate__animated animate__fadeIn" style={{
-        width: '22rem',
-        borderRadius: '1.25rem',
-        background: 'linear-gradient(145deg, #1a1a1a, #111)',
-        boxShadow: '0 0 30px rgba(0, 0, 0, 0.6)',
-        color: '#ffffff',
-      }}>
-        <div className="text-center mb-2">
-          <img src="/logo.png" alt="Logo" style={{ width: '45px', height: '45px', objectFit: 'contain' }} />
-        </div>
+                    <form onSubmit={handleSubmit} className="form-container">
+                        {message && (
+                            <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-danger'} fade show`} role="alert" style={{ fontSize: '0.9rem', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                                {message.text}
+                            </div>
+                        )}
 
-        <form onSubmit={handleSubmit}>
-          <h3 className="text-center mb-3" style={{ fontWeight: 'bold', fontSize: '1.4rem' }}>
-            Welcome Back
-          </h3>
+                        <div className="form-group mb-4">
+                            <label htmlFor="usernameOrEmail" className="form-label" style={{ color: '#eeeeee', fontSize: '0.95rem' }}>
+                                Username or Email
+                            </label>
+                            <input
+                                type="text"
+                                id="usernameOrEmail"
+                                className={`form-control ${errors.usernameOrEmail ? 'is-invalid' : ''}`}
+                                placeholder="Enter username or email"
+                                value={formData.usernameOrEmail}
+                                onChange={handleChange}
+                                style={{
+                                    borderRadius: '0.75rem',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                                    color: '#ffffff',
+                                    fontSize: '1rem',
+                                    padding: '0.75rem',
+                                    boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.03)',
+                                }}
+                            />
+                            {errors.usernameOrEmail && (
+                                <div className="invalid-feedback" style={{ fontSize: '0.8rem' }}>
+                                    {errors.usernameOrEmail}
+                                </div>
+                            )}
+                        </div>
 
-          {message && (
-            <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-danger'}`} style={{ fontSize: '0.9rem' }}>
-              {message.text}
+                        <div className="form-group mb-4">
+                            <label htmlFor="password" className="form-label" style={{ color: '#eeeeee', fontSize: '0.95rem' }}>
+                                Password
+                            </label>
+                            <div className="input-group">
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    id="password"
+                                    className={`form-control ${errors.password ? 'is-invalid' : ''}`}
+                                    placeholder="Password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    style={{
+                                        borderRadius: '0.75rem',
+                                        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                                        color: '#ffffff',
+                                        fontSize: '1rem',
+                                        padding: '0.75rem',
+                                        boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.03)',
+                                    }}
+                                />
+                                <button
+                                    className="btn btn-outline-secondary"
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    style={{
+                                        borderTopLeftRadius: '0',
+                                        borderBottomLeftRadius: '0',
+                                        borderColor: 'rgba(255, 255, 255, 0.15)',
+                                        padding: '0.2rem 0.5rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                                    }}
+                                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                >
+                                    {showPassword ? <FaEye size={18} color="#eeeeee" /> : <FaEyeSlash size={18} color="#eeeeee" />}
+                                </button>
+                            </div>
+                            {errors.password && (
+                                <div className="invalid-feedback" style={{ fontSize: '0.8rem' }}>
+                                    {errors.password}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="form-group mb-4 text-end">
+                            <a href="/forgot-password" className="text-info" style={{ fontSize: '0.9rem', textDecoration: 'none', color: '#4299e1' }}>
+                                Forgot password?
+                            </a>
+                        </div>
+
+                        <button
+                            type="submit"
+                            className="btn btn-primary w-100"
+                            disabled={loading}
+                            style={{
+                                borderRadius: '0.75rem',
+                                padding: '0.8rem',
+                                fontWeight: 'bold',
+                                fontSize: '1.1rem',
+                                backgroundColor: '#4299e1',
+                                border: 'none',
+                                boxShadow: '0 6px 12px rgba(0, 0, 0, 0.25)',
+                                transition: 'all 0.2s ease',
+                            }}
+                        >
+                            {loading ? (
+                                <>
+                                    <FaSpinner className="mr-2 fa-spin" size={18} /> Logging in...
+                                </>
+                            ) : (
+                                'Login'
+                            )}
+                        </button>
+                    </form>
+
+                    <div className="text-center mt-4" style={{ color: '#cccccc', fontSize: '0.9rem' }}>
+                        Don't have an account?{' '}
+                        <a href="/signup" className="font-weight-semibold text-primary" style={{ textDecoration: 'none', color: '#4299e1' }}>
+                            Sign up
+                        </a>
+                    </div>
+                </div>
             </div>
-          )}
-
-          <div className="mb-2">
-            <label htmlFor="usernameOrEmail" className="form-label" style={{ color: '#bbbbbb', fontSize: '0.9rem' }}>
-              Username or Email
-            </label>
-            <input
-              type="text"
-              id="usernameOrEmail"
-              className="form-control"
-              placeholder="Enter username or email"
-              value={formData.usernameOrEmail}
-              onChange={handleChange}
-              style={{
-                borderRadius: '0.6rem',
-                padding: '0.5rem',
-                backgroundColor: '#262626',
-                border: '1px solid #555',
-                color: '#ffffff',
-                fontSize: '0.9rem',
-              }}
-            />
-            {errors.usernameOrEmail && (
-              <small style={{ color: '#ff6b6b', fontSize: '0.8rem' }}>{errors.usernameOrEmail}</small>
-            )}
-          </div>
-
-          <div className="mb-1 position-relative">
-            <label htmlFor="password" className="form-label" style={{ color: '#bbbbbb', fontSize: '0.9rem' }}>
-              Password
-            </label>
-            <div className="position-relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                className="form-control"
-                placeholder="Password"
-                value={formData.password}
-                onChange={handleChange}
-                style={{
-                  borderRadius: '0.6rem',
-                  padding: '0.5rem 2.5rem 0.5rem 0.5rem',
-                  backgroundColor: '#262626',
-                  border: '1px solid #555',
-                  color: '#ffffff',
-                  fontSize: '0.9rem',
-                }}
-              />
-              <span
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  right: '10px',
-                  transform: 'translateY(-50%)',
-                  cursor: 'pointer',
-                  color: '#bbbbbb',
-                }}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </span>
-            </div>
-            {errors.password && (
-              <small style={{ color: '#ff6b6b', fontSize: '0.8rem' }}>{errors.password}</small>
-            )}
-          </div>
-
-          <div className="text-end mb-2">
-            <a href="/forgot-password" style={{ color: '#4e54c8', fontSize: '0.85rem', textDecoration: 'none' }}>
-              Forgot password?
-            </a>
-          </div>
-
-          <button
-            type="submit"
-            className="btn w-100"
-            style={{
-              borderRadius: '0.7rem',
-              padding: '0.6rem',
-              backgroundColor: '#4e54c8',
-              border: 'none',
-              fontWeight: 'bold',
-              color: '#ffffff',
-              fontSize: '1rem',
-            }}
-            disabled={loading} // Disable the button while loading
-          >
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-
-        <div className="text-center mt-3">
-          <p className="mb-0" style={{ color: '#bbbbbb', fontSize: '0.85rem' }}>
-            Don't have an account?{' '}
-            <a href="/signup" className="fw-bold" style={{ color: '#4e54c8', textDecoration: 'none' }}>
-              Sign up
-            </a>
-          </p>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
 
 export default Login;

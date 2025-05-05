@@ -1,5 +1,11 @@
+/**
+ * ResetPassword Component
+ * Handles password reset using email and token from URL query params.
+ * Validates password strength and submits to /auth/reset-password endpoint.
+ * TODO: Add separate confirm password toggle, move styles to CSS module, enhance password strength meter.
+ */
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom'; // Import useSearchParams
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import api from '../api';
 
@@ -17,10 +23,10 @@ function ResetPassword() {
     const email = searchParams.get('email');
 
     const checkPasswordStrength = (password) => {
-        const strengthRegex = /^(?=.*[a-z])(?=.*\d)\S{8,}$/;
+        const strengthRegex = /^(?=.*[A-Za-z])(?=.*\d)\S{8,}$/;
         if (password.length === 0) return '';
         if (password.length < 8) return 'Too short';
-        if (!/[a-z]/.test(password)) return 'Must contain at least one lowercase letter';
+        if (!/[A-Za-z]/.test(password)) return 'Must contain at least one letter';
         if (!/\d/.test(password)) return 'Must contain at least one number';
         if (strengthRegex.test(password)) return 'Strong';
         return 'Weak';
@@ -30,9 +36,9 @@ function ResetPassword() {
         e.preventDefault();
         setError('');
         setSuccessMsg('');
-        setPasswordStrength('');
+        setPasswordStrength(''); // Reset password strength feedback
 
-        const passwordRegex = /^(?=.*[a-z])(?=.*\d)\S{8,}$/; // Aligned with backend
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)\S{8,}$/;
 
         if (!password || !confirmPassword) {
             setError('Both fields are required.');
@@ -43,7 +49,7 @@ function ResetPassword() {
             return;
         }
         if (!passwordRegex.test(password)) {
-            setError('Password must be at least 8 characters long and contain at least one lowercase letter and one number.');
+            setError('Password must be at least 8 characters long and contain at least one letter and one number.');
             return;
         }
 
@@ -54,13 +60,13 @@ function ResetPassword() {
 
         setLoading(true);
         try {
-            const response = await api.post('/auth/reset-password', { email, token, newPassword: password }); // ✅ Sending email, token, and newPassword
+            await api.post('/auth/reset-password', { email, token, newPassword: password });
             setLoading(false);
             setSuccessMsg('Password has been reset successfully!');
             setTimeout(() => navigate('/login'), 2000);
         } catch (err) {
             setLoading(false);
-            setError(err.response?.data?.error || 'An error occurred while resetting your password.');
+            setError(err.response?.data?.error || 'Failed to connect to the server. Please try again.');
         }
     };
 
@@ -102,6 +108,7 @@ function ResetPassword() {
                                         setPasswordStrength(checkPasswordStrength(e.target.value));
                                     }}
                                     style={styles.passwordInput}
+                                    required
                                 />
                                 <span onClick={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
                                     {showPassword ? <Eye size={22} /> : <EyeOff size={22} />}
@@ -118,6 +125,7 @@ function ResetPassword() {
                             <label htmlFor="confirmPassword" style={styles.label}>
                                 Confirm Password
                             </label>
+                            {/* TODO: Consider separate showConfirmPassword state for independent toggle */}
                             <input
                                 type={showPassword ? 'text' : 'password'}
                                 id="confirmPassword"
@@ -125,6 +133,7 @@ function ResetPassword() {
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 style={styles.input}
+                                required
                             />
                         </div>
 
