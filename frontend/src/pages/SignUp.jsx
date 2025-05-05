@@ -224,7 +224,7 @@ function SignUp() {
           <div className="card-body p-4">
             <h3 style={{ fontWeight: 'bold', fontSize: '1.5rem', color: '#4299e1', marginBottom: '1rem' }}>Account Created!</h3>
             <p style={{ fontSize: '0.95rem', color: '#cccccc', marginBottom: '1.5rem' }}>
-              Please enter the OTP sent to your email ({formData.email}) to verify your account. Check your spam/junk folder if you don’t see it.
+              Please enter the OTP sent to your email ({formData.email}) to verify your account.
             </p>
 
             {resendError && (
